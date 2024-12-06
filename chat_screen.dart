@@ -1,5 +1,7 @@
+import 'dart:convert'; // Import for JSON parsing
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // For environment variables
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -7,9 +9,9 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  List<String> messages = [];
+  List<Map<String, String>> messages = [];
   TextEditingController messageController = TextEditingController();
-  String openAIKey = "sk-ioX6bXrT1qKCNKYo4pDAT3B|bk-FJW500qyaX2tDSFf36Nb05"; 
+  String openAIKey = dotenv.env['OPENAI_API_KEY'] ?? ''; // Load API key from .env file
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +25,18 @@ class _ChatScreenState extends State<ChatScreen> {
             child: ListView.builder(
               itemCount: messages.length,
               itemBuilder: (context, index) {
+                final message = messages[index];
+                final isUser = message['sender'] == 'User';
                 return ListTile(
-                  title: Text(messages[index]),
+                  leading: isUser ? null : Icon(Icons.chat, color: Colors.blue),
+                  trailing: isUser ? Icon(Icons.person, color: Colors.green) : null,
+                  title: Text(
+                    message['text'] ?? '',
+                    style: TextStyle(
+                      color: isUser ? Colors.green : Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 );
               },
             ),
@@ -38,13 +50,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: messageController,
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),
                 IconButton(
                   icon: Icon(Icons.send),
                   onPressed: () {
-                    _sendMessage(messageController.text);
+                    if (messageController.text.trim().isNotEmpty) {
+                      _sendMessage(messageController.text);
+                    }
                   },
                 ),
               ],
@@ -56,31 +71,47 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendMessage(String message) async {
+    setState(() {
+      messages.add({'sender': 'User', 'text': message});
+    });
+
     try {
       final response = await http.post(
-        Uri.parse('https://api.openai.com/v1/engines/davinci-codex/completions'),
+        Uri.parse('https://api.openai.com/v1/engines/text-davinci-003/completions'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $openAIKey',
         },
-        body: '{"prompt": "$message", "max_tokens": 50}',
+        body: jsonEncode({
+          'prompt': message,
+          'max_tokens': 100,
+          'temperature': 0.7,
+        }),
       );
 
       if (response.statusCode == 200) {
-        final jsonResponse = response.body;
-        final gptResponse = jsonResponse.toString();
+        final jsonResponse = jsonDecode(response.body);
+        final gptResponse = jsonResponse['choices'][0]['text']?.trim() ?? 'No response';
+
         setState(() {
-          messages.add('User: $message');
-          messages.add('ChatGPT: $gptResponse');
-          messageController.clear();
+          messages.add({'sender': 'ChatGPT', 'text': gptResponse});
         });
       } else {
-        print('Failed to get GPT response: ${response.statusCode}');
-        
+        _showError('Failed to get response from OpenAI: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error during API request: $e');
-      
+      _showError('Error during API request: $e');
+    } finally {
+      messageController.clear();
     }
+  }
+
+  void _showError(String errorMessage) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(errorMessage),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 }
