@@ -1,0 +1,37 @@
+ChatGPT Clone
+
+A ChatGPT Clone built with Flutter that integrates OpenAI’s GPT API to simulate chatbot conversations. This project demonstrates the seamless integration of AI capabilities into a Flutter-based mobile application with a clean and responsive UI.
+
+📱 Features
+
+	•	Real-Time Chat: Send messages and receive AI-powered responses in real time.
+	•	User-Friendly UI: Differentiated user and bot messages for enhanced readability.
+	•	Secure API Management: Uses flutter_dotenv to securely handle OpenAI API keys.
+	•	Customizable: Modify the UI or chatbot behavior to suit your needs.
+
+🛠️ Technologies Used
+
+	•	Flutter: Frontend framework for building cross-platform apps.
+	•	Dart: Programming language used with Flutter.
+	•	OpenAI API: For generating chatbot responses.
+	•	flutter_dotenv: For secure storage of API keys.
+
+📂 Project Structure
+
+ChatGPT_Clone/
+├── lib/
+│   ├── main.dart          # Entry point of the application
+│   ├── chat_screen.dart   # Chat UI and OpenAI integration
+├── .env                   # API key (excluded from Git)
+├── pubspec.yaml           # Dependency configuration
+├── .gitignore             # Files to ignore in Git
+└── README.md              # Project documentation
+
+📝 License
+
+This project is open-source and available under the MIT License. Feel free to modify and use it for your own purposes.
+
+📧 Contact
+
+For questions or feedback, feel free to reach out:
+	•	Author: Yuvraj Tyagi
